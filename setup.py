@@ -27,7 +27,7 @@ setup(
     name='seamlessf5',
     packages=['seamlessf5'],
     version='0.1',
-    description='Helpers for smoother transitioning to multi-FAST5 files',
+    description='Helpers for smoother transitioning to multi-read FAST5 files',
     author='Hyeshik Chang',
     author_email='hyeshik@snu.ac.kr',
     url='https://github.com/hyeshik/seamlessf5',
