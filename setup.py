@@ -27,7 +27,7 @@ setup(
     name='seamlessf5',
     packages=['seamlessf5'],
     version='0.1',
-    description='Tools for smoother transitioning to multi-FAST5 files',
+    description='Helpers for smoother transitioning to multi-FAST5 files',
     author='Hyeshik Chang',
     author_email='hyeshik@snu.ac.kr',
     url='https://github.com/hyeshik/seamlessf5',
@@ -50,12 +50,14 @@ setup(
     install_requires=[
         'h5py >= 2.9.0',
         'ont-fast5-api >= 1.0.1',
+        'progressbar33 >= 2.4',
     ],
     entry_points={
         'console_scripts': [
             'sf5_read_fast5_basecaller.py = seamlessf5.albacore_hooks:read_fast5_basecaller',
             'sf5_full_1dsq_basecaller.py = seamlessf5.albacore_hooks:full_1dsq_basecaller',
             'sf5_paired_read_basecaller.py = seamlessf5.albacore_hooks:paired_read_basecaller',
+            'sf5_single_to_multi_fast5 = seamlessf5.single2multi_hooks:run_single2multi',
         ],
     },
 )
