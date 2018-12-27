@@ -1,6 +1,6 @@
 # SeamlessF5
 SeamlessF5 adds useful missing features for the easier transition to
-Oxford Nanopore Technologies's
+Oxford Nanopore Technologies'
 [new multi-read FAST5 format](https://community.nanoporetech.com/posts/fast5-file-format-change).
 
 ## Installation
