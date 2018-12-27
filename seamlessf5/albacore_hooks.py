@@ -26,15 +26,36 @@ import sys
 import subprocess
 import h5py
 import importlib.machinery
+import shutil
 from ont_fast5_api.multi_fast5 import MultiFast5File
+from ont_fast5_api.conversion_tools import multi_to_single_fast5
 from ont_fast5_api import fast5_info
-from albacore import read_metadata, input_utils, time_utils
+from albacore import read_metadata, input_utils, time_utils, log_utils
 
-READID_SEPARATOR = '#'
+READID_SEPARATOR = '___read_'
+FAST5_SUFFIX = '.fast5'
+
+def is_mf5read(enc):
+    return enc.lower().endswith(FAST5_SUFFIX) and READID_SEPARATOR in enc
+
+def split_mf5read(enc):
+    if not enc.lower().endswith(FAST5_SUFFIX):
+        return enc, None
+
+    fname, read_id = enc[:-len(FAST5_SUFFIX)].rsplit(READID_SEPARATOR, 1)
+    return fname + enc[-len(FAST5_SUFFIX):], read_id
+
+def join_mf5read(filename, read_id):
+    if not filename.lower().endswith(FAST5_SUFFIX):
+        return filename
+
+    return ''.join([
+        filename[:-len(FAST5_SUFFIX)], READID_SEPARATOR,
+        read_id, filename[-len(FAST5_SUFFIX):]])
 
 class SLReadMetadata(read_metadata.ReadMetadata):
     def _read_fast5(self):
-        if READID_SEPARATOR in self.filename:
+        if is_mf5read(self.filename) and not os.path.isfile(self.filename):
             return self._read_fast5_multi()
         else:
             return super(read_metadata.ReadMetadata, self)._read_fast5()
@@ -50,7 +71,9 @@ class SLReadMetadata(read_metadata.ReadMetadata):
         return fast5_info.ReadInfo(0, read_id, start_time, duration, mux, median_before)
 
     def _read_fast5_multi(self):
-        fname, read_id = self.filename.rsplit(READID_SEPARATOR, 1)
+        fname, read_id = split_mf5read(self.filename)
+        if read_id is None:
+            raise ValueError('A multi-read fast5 is expected.')
 
         with MultiFast5File(fname, 'r') as fh:
             read = fh.get_read(read_id)
@@ -102,12 +125,41 @@ def sl_find_input_files(opts, ofun=input_utils._find_input_files):
                         continue
 
                     read_id = nodename.split('_', 1)[1]
-                    encoded_fname = fname + READID_SEPARATOR + read_id
+                    encoded_fname = join_mf5read(fname, read_id)
                     files_expanded.append(encoded_fname)
         except:
             files_expanded.append(fname)
 
     return files_expanded
+
+def fix_converted_fast5(fname):
+    with h5py.File(fname, 'a') as hf:
+        if 'Analyses' not in hf:
+            hf.create_group('Analyses')
+
+def sl_copyfile(src, dest, ofun=shutil.copyfile):
+    if is_mf5read(src):
+        filename, read_id = split_mf5read(src)
+        try:
+            with MultiFast5File(filename, 'r') as mf5:
+                read = mf5.get_read(read_id)
+                multi_to_single_fast5.create_single_f5(dest, read)
+                fix_converted_fast5(dest)
+        except:
+            import traceback
+            traceback.print_exc()
+            raise
+    else:
+        ofun(src, dest)
+
+def sl_initialise_logger(*args, ofun=log_utils.initialise_logger, **kwds):
+    import logging
+    # Suppress logs from stdout which was turned on by ont_fast5_api
+    logging.getLogger('albacore').propagate = False
+    logger = ofun(*args, **kwds)
+    logger.info('+ SeamlessF5 add-on {} for multi-read fast5 accession. '
+                'https://github.com/hyeshik/seamlessf5'.format(__version__))
+    return logger
 
 def get_executable_path(name):
     if os.name == 'posix':
@@ -123,6 +175,8 @@ SeamlessF5 {} activated!
 def install_hooks():
     input_utils._find_input_files = sl_find_input_files
     read_metadata.ReadMetadata = SLReadMetadata
+    shutil.copyfile = sl_copyfile
+    log_utils.initialise_logger = sl_initialise_logger
 
 def run_albacore(script_name):
     show_banner()
@@ -141,3 +195,6 @@ def full_1dsq_basecaller():
 def paired_read_basecaller():
     run_albacore('paired_read_basecaller.py')
 
+
+if __name__ == '__main__':
+    read_fast5_basecaller()

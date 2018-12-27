@@ -26,7 +26,7 @@ from setuptools import setup
 setup(
     name='seamlessf5',
     packages=['seamlessf5'],
-    version='0.1',
+    version='0.2',
     description='Helpers for smoother transitioning to multi-read FAST5 files',
     author='Hyeshik Chang',
     author_email='hyeshik@snu.ac.kr',
