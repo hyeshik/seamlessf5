@@ -1,5 +1,5 @@
 # SeamlessF5
-SeamlessF5 adds useful missing features that helps making transitions to
+SeamlessF5 adds useful missing features for the easier transition to
 Oxford Nanopore Technologies's
 [new multi-read FAST5 format](https://community.nanoporetech.com/posts/fast5-file-format-change).
 
@@ -23,9 +23,9 @@ sf5_single_to_multi_fast5 -i fast5.tar.gz -s save_path --recursive
 ## Running albacore for multi-read FAST5
 This package also installs wrappers, `sf5_read_fast5_basecaller.py`,
 `sf5_full_1dsq_basecaller.py`, and `sf5_paired_read_basecaller.py` which
-enable loading multi-read FAST5 files for ONT's albacore.
+enable loading multi-read FAST5 files for ONT's albacore. Just add
+`sf5_` before your old command lines.
 
 ```bash
 sf5_read_fast5basecaller.py -i multiread-fast5-dir ...
 ```
-
